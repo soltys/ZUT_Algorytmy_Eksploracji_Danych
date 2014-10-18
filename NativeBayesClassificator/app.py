@@ -43,5 +43,15 @@ def readData():
 
 if __name__ == "__main__":
     df = readData()
-    print df['type'].value_counts()
+    dataProps = {
+        'sum': df.sum(),
+        'count': df.count(),
+        'mean': df.mean(),
+        'std': df.std(),
+    }
+    print(dataProps['sum'])
+    typeGroups = df.groupby('type')
+    dataCount = typeGroups.agg(['sum', 'count', 'mean', 'std'])
+    # print dataCount.loc['fish']
+    #print dataCount.loc['mammal'].loc['legs']
     pass
