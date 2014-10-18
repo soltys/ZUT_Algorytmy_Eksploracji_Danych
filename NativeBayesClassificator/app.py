@@ -56,15 +56,14 @@ class BayesZoo:
         return value
 
 
-    def calculateProbality(self, typeName, columnName):
-        if columnName == "legs":
-            value = self.calculateValuesProbality(typeName, columnName)
-        else:
-            value = self.calculateBinaryProbality(typeName, columnName)
-
-        return value
-
-
+    def calculateProbality(self, typeName, columnName, value):
+        sameInType = 0
+        try:
+            sameInType = self.data[self.data['type'].isin([typeName])][columnName].value_counts()[value]
+        except:
+            pass
+        dataCount = self.data[self.data['type'].isin([typeName])][columnName].count()
+        return sameInType / dataCount
     def readData(self):
 
         self.data = pd.read_csv(u'../Datasets/zoo.data', sep=',', names=self.columnNames, header=None)
@@ -80,11 +79,7 @@ class BayesZoo:
         for typeName in self.typeNames:
             pType = b.data['type'].value_counts().loc[typeName] / len(b.data)
             for columnName in self.columnNames[1:-1]:
-                if columnName == "legs":
-                    continue
-                pForClass = self.calculateProbality(typeName, columnName)
-                if columnName != "legs" and data[columnName] == 0:
-                    pForClass = 1 - pForClass
+                pForClass = self.calculateProbality(typeName, columnName, data[columnName])
                 pType *= pForClass
             pForEachType[typeName] = pType
         return pForEachType
@@ -94,7 +89,7 @@ if __name__ == "__main__":
     b = BayesZoo()
     sample = "0,1,1 0,1,0 1,0,1 1,0,0 2,1,0 0"
 
-    testData = {
+    human = {
         'hair': 1,
         'feathers': 0,
         'eggs': 0,
@@ -107,16 +102,11 @@ if __name__ == "__main__":
         'breathes': 1,
         'venomous': 0,
         'fins': 0,
-        # 'legs':2,
+        'legs': 2,
         'tail': 0,
         'domestic': 1,
         'catsize': 0,
 
     }
-    result = b.classify(testData)
+    result = b.classify(human)
     print max(result, key=result.get)
-
-
-
-
-    pass
