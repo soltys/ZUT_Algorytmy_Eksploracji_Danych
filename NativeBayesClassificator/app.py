@@ -5,9 +5,10 @@ __author__ = 'Paweł Sołtysiak'
 import numpy as np
 import pandas as pd
 
+
 # import
 class BayesZoo:
-    numbersToNamesMapping = {
+    numbers_names_mapping = {
         1: 'mammal',
         2: 'bird',
         3: 'reptile',
@@ -16,8 +17,8 @@ class BayesZoo:
         6: 'insect',
         7: 'shellfish',
     }
-    typeNames = numbersToNamesMapping.values()
-    columnNames = [
+    type_names = numbers_names_mapping.values()
+    column_names = [
         'animalName',
         'hair',
         'feathers',
@@ -39,50 +40,30 @@ class BayesZoo:
     ]
 
     def __init__(self):
-        self.readData()
+        self.data = pd.read_csv(u'../Datasets/zoo.data', sep=',', names=self.column_names, header=None)
+        self.data['type'].replace(self.numbers_names_mapping, inplace=True)
         pass
 
-    def calculateBinaryProbality(self, typeName, columnName):
-        sumForType = self.typeGroupsAgg.loc[typeName].loc[columnName].loc['sum']
-        classCount = self.data[columnName].sum()
-        return sumForType / classCount
-
-    def calculateValuesProbality(self, typeName, columnName):
-        typeStd = self.typeGroupsAgg.loc[typeName].loc[columnName].loc['std']
-        mean = self.typeGroupsAgg.loc[typeName].loc[columnName].loc['mean']
-        denominator = np.sqrt(2 * np.pi * typeStd ** 2)
-        value = (1 / denominator) * np.exp(-(6 - mean) ** 2 / 2 * typeStd ** 2)
-
-        return value
-
-
-    def calculateProbality(self, typeName, columnName, value):
-        sameInType = 0
+    def get_value_count_in_type(self, type_name, column_name, value):
         try:
-            sameInType = self.data[self.data['type'].isin([typeName])][columnName].value_counts()[value]
+            return self.data[self.data['type'].isin([type_name])][column_name].value_counts()[value]
         except:
-            pass
-        dataCount = self.data[self.data['type'].isin([typeName])][columnName].count()
-        return sameInType / dataCount
-    def readData(self):
+            return 0
 
-        self.data = pd.read_csv(u'../Datasets/zoo.data', sep=',', names=self.columnNames, header=None)
-        self.data['type'].replace(self.numbersToNamesMapping, inplace=True)
-
-        self.typeGroups = self.data.groupby(['type'])
-        self.typeGroupsAgg = self.typeGroups.agg(['sum', 'count', 'mean', 'std'])
-
+    def calculate_probality(self, type_name, column_name, value):
+        type_count = self.get_value_count_in_type(type_name, column_name, value)
+        data_count = self.data[self.data['type'].isin([type_name])][column_name].count()
+        return type_count / data_count
 
     def classify(self, data):
-        pForEachType = {key: 0 for (key) in self.typeNames}
-
-        for typeName in self.typeNames:
-            pType = b.data['type'].value_counts().loc[typeName] / len(b.data)
-            for columnName in self.columnNames[1:-1]:
-                pForClass = self.calculateProbality(typeName, columnName, data[columnName])
-                pType *= pForClass
-            pForEachType[typeName] = pType
-        return pForEachType
+        p = {key: 0 for (key) in self.type_names}
+        for typeName in self.type_names:
+            p_type = b.data['type'].value_counts().loc[typeName] / len(b.data)
+            for columnName in self.column_names[1:-1]:
+                p_class = self.calculate_probality(typeName, columnName, data[columnName])
+                p_type *= p_class
+            p[typeName] = p_type
+        return p
 
 
 if __name__ == "__main__":
